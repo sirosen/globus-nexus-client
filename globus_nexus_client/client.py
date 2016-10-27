@@ -1,6 +1,5 @@
 from globus_sdk import (
-    AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer,
-    exc)
+    AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer, exc)
 from globus_sdk.base import BaseClient, merge_params
 
 
@@ -33,24 +32,32 @@ class NexusClient(BaseClient):
 
         :rtype: string
         """
+        self.logger.info("NexusClient.get_goauth_token() called")
         if not isinstance(self.authorizer, BasicAuthorizer):
             raise exc.GlobusError('get_goauth_token() requires basic auth')
         r = self.get('/goauth/token?grant_type=client_credentials')
         try:
-            return r['access_token']
+            tok = r['access_token']
+            self.logger.debug("NexusClient.get_goauth_token() success")
+            return tok
         except KeyError:
+            self.logger.warn(
+                ("NexusClient.get_goauth_token() failed somehow, raising an "
+                 "exception now"))
             raise exc.GlobusAPIError(r)
 
     def get_user(self, username):
         """
         :rtype: GlobusResponse
         """
+        self.logger.info("NexusClient.get_user({})".format(username))
         return self.get('/users/{}'.format(username))
 
     def get_group(self, group_id):
         """
         :rtype: GlobusResponse
         """
+        self.logger.info("NexusClient.get_group({})".format(group_id))
         return self.get('/groups/{}'.format(group_id))
 
     def list_groups(self, for_all_identities=None,
@@ -62,4 +69,5 @@ class NexusClient(BaseClient):
         merge_params(params, for_all_identities=for_all_identities,
                      include_identity_set_params=include_identity_set_params,
                      fields=fields, my_roles=my_roles)
+        self.logger.info("NexusClient.list_groups({})".format(str(params)))
         return self.get('/groups/list', json_body=params)
