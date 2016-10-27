@@ -1,7 +1,7 @@
 from globus_sdk import (
     AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer,
     exc)
-from globus_sdk.base import BaseClient
+from globus_sdk.base import BaseClient, merge_params
 
 
 class NexusClient(BaseClient):
@@ -53,8 +53,13 @@ class NexusClient(BaseClient):
         """
         return self.get('/groups/{}'.format(group_id))
 
-    def list_groups(self):
+    def list_groups(self, for_all_identities=None,
+                    include_identity_set_params=None,
+                    fields=None, my_roles=None, **params):
         """
         :rtype: GlobusResponse
         """
-        return self.get('/groups/list')
+        merge_params(params, for_all_identities=for_all_identities,
+                     include_identity_set_params=include_identity_set_params,
+                     fields=fields, my_roles=my_roles)
+        return self.get('/groups/list', json_body=params)
