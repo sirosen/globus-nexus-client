@@ -2,6 +2,8 @@ from globus_sdk import (
     AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer, exc)
 from globus_sdk.base import BaseClient, merge_params
 
+from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
+
 
 class NexusClient(BaseClient):
     """
@@ -20,10 +22,13 @@ class NexusClient(BaseClient):
     ``transfer_token``).
     """
     allowed_authorizer_types = [AccessTokenAuthorizer, RefreshTokenAuthorizer,
-                                BasicAuthorizer]
+                                BasicAuthorizer, LegacyGOAuthAuthorizer]
 
-    def __init__(self, **kwargs):
-        BaseClient.__init__(self, "nexus", **kwargs)
+    def __init__(self, legacy_token=None, **kwargs):
+        authorizer = kwargs.pop('authorizer', None)
+        if legacy_token:
+            authorizer = LegacyGOAuthAuthorizer(legacy_token)
+        BaseClient.__init__(self, "nexus", authorizer=authorizer, **kwargs)
 
     def get_goauth_token(self):
         """
