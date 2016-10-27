@@ -70,4 +70,4 @@ class NexusClient(BaseClient):
                      include_identity_set_params=include_identity_set_params,
                      fields=fields, my_roles=my_roles)
         self.logger.info("NexusClient.list_groups({})".format(str(params)))
-        return self.get('/groups/list', json_body=params)
+        return self.get('/groups/list', params=params)
