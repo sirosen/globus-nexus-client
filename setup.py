@@ -16,6 +16,7 @@ setup(name="globus-nexus-client",
       packages=['globus_nexus_client'],
       install_requires=[
           'globus-sdk>=1.0.0,<2.0.0',
+          'six>=1.10.0,<2.0.0',
       ],
 
       keywords=["globus", "groups", "nexus"],
