@@ -1,5 +1,6 @@
 from globus_sdk import (
-    AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer, exc)
+    AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer,
+    NullAuthorizer, exc)
 from globus_sdk.base import BaseClient, merge_params
 
 from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
@@ -22,7 +23,8 @@ class NexusClient(BaseClient):
     ``transfer_token``).
     """
     allowed_authorizer_types = [AccessTokenAuthorizer, RefreshTokenAuthorizer,
-                                BasicAuthorizer, LegacyGOAuthAuthorizer]
+                                BasicAuthorizer, NullAuthorizer,
+                                LegacyGOAuthAuthorizer]
 
     def __init__(self, legacy_token=None, **kwargs):
         authorizer = kwargs.pop('authorizer', None)
@@ -76,3 +78,11 @@ class NexusClient(BaseClient):
                      fields=fields, my_roles=my_roles)
         self.logger.info("NexusClient.list_groups({})".format(str(params)))
         return self.get('/groups', params=params)
+
+    def get_group_tree(self, group_id, depth=None, my_roles=None,
+                       my_statuses=None, **params):
+        merge_params(params, depth=depth, my_roles=my_roles,
+                     my_statuses=my_statuses)
+        self.logger.info("NexusClient.get_group_tree({},{})"
+                         .format(group_id, str(params)))
+        return self.get('/groups/{}/tree'.format(group_id), params=params)
