@@ -6,6 +6,7 @@ from globus_sdk import (
 from globus_sdk.base import BaseClient, merge_params
 
 from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
+from globus_nexus_client.response import GlobusArrayResponse
 
 
 class NexusClient(BaseClient):
@@ -100,7 +101,8 @@ class NexusClient(BaseClient):
                      include_identity_set_params=include_identity_set_params,
                      fields=fields, my_roles=my_roles)
         self.logger.info("NexusClient.list_groups({})".format(str(params)))
-        return self.get('/groups', params=params)
+        return self.get('/groups', params=params,
+                        response_class=GlobusArrayResponse)
 
     def get_group_tree(self, group_id, depth=None, my_roles=None,
                        my_statuses=None, **params):
@@ -108,14 +110,16 @@ class NexusClient(BaseClient):
                      my_statuses=my_statuses)
         self.logger.info("NexusClient.get_group_tree({},{})"
                          .format(group_id, str(params)))
-        return self.get('/groups/{}/tree'.format(group_id), params=params)
+        return self.get('/groups/{}/tree'.format(group_id), params=params,
+                        response_class=GlobusArrayResponse)
 
     def get_group_memberships(self, group_id):
         """
         :rtype: GlobusResponse
         """
         self.logger.info("NexusClient.get_group_members({})".format(group_id))
-        return self.get('/groups/{}/members'.format(group_id))
+        return self.get('/groups/{}/members'.format(group_id),
+                        response_class=GlobusArrayResponse)
 
     def get_group_membership(self, group_id, username):
         """
