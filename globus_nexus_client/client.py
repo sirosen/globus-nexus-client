@@ -97,6 +97,10 @@ class NexusClient(BaseClient):
         """
         :rtype: GlobusResponse
         """
+        # if not string, assume iterable
+        if my_roles and not isinstance(my_roles, six.string_types):
+            my_roles = ",".join(my_roles)
+
         merge_params(params, for_all_identities=for_all_identities,
                      include_identity_set_params=include_identity_set_params,
                      fields=fields, my_roles=my_roles)
@@ -106,6 +110,14 @@ class NexusClient(BaseClient):
 
     def get_group_tree(self, group_id, depth=None, my_roles=None,
                        my_statuses=None, **params):
+        # if not string, assume iterable
+        if my_roles and not isinstance(my_roles, six.string_types):
+            my_roles = ",".join(my_roles)
+        # if not string, assume iterable
+        if my_statuses and not isinstance(my_statuses, six.string_types):
+            my_statuses = ",".join(my_statuses)
+
+
         merge_params(params, depth=depth, my_roles=my_roles,
                      my_statuses=my_statuses)
         self.logger.info("NexusClient.get_group_tree({},{})"
