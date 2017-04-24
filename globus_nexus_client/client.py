@@ -60,6 +60,9 @@ class NexusClient(BaseClient):
         """
         :rtype: GlobusResponse
         """
+        if not isinstance(self.authorizer, LegacyGOAuthAuthorizer):
+            raise exc.GlobusError('get_user() requires LegacyGOAuthAuthorizer '
+                                  'based authorization (a.k.a. Nexus Tokens)')
         self.logger.info("NexusClient.get_user({})".format(username))
         return self.get('/users/{}'.format(username))
 
@@ -116,7 +119,6 @@ class NexusClient(BaseClient):
         # if not string, assume iterable
         if my_statuses and not isinstance(my_statuses, six.string_types):
             my_statuses = ",".join(my_statuses)
-
 
         merge_params(params, depth=depth, my_roles=my_roles,
                      my_statuses=my_statuses)
