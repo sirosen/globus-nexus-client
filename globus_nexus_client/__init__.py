@@ -1,8 +1,10 @@
 import logging
 
 from globus_nexus_client.client import NexusClient
+from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
 
-__all__ = ['NexusClient']
+__all__ = ['NexusClient',
+           'LegacyGOAuthAuthorizer']
 
 
 # configure logging for a library, per python best practices:
