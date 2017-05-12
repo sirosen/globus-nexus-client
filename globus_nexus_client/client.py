@@ -66,6 +66,15 @@ class NexusClient(BaseClient):
         self.logger.info("NexusClient.get_user({})".format(username))
         return self.get('/users/{}'.format(username))
 
+    def get_user_groups_profile(self, group_id, username):
+        """
+        :rtype: GlobusResponse
+        """
+        self.logger.info(
+            "NexusClient.get_user_profile({}, {})".format(group_id, username))
+        return self.get(
+            '/groups/{}/members/{}/user'.format(group_id, username))
+
     def get_group(self, group_id):
         """
         :rtype: GlobusResponse
