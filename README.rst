@@ -1,5 +1,5 @@
 Disclaimer: This Is Not An Official Globus.org Product
-===
+======================================================
 
 This is a personal project borne of my own frustration trying to interact with
 the Globus Nexus API.
@@ -11,9 +11,9 @@ unsupported ``python-nexus-client`` sample lib, which is remarkably terrible.
 
 
 Globus Nexus Client
-===
+===================
 
-When Globus added the new `SDK <https://github.com/globus/globus-sdk-python`_
+When Globus added the new `SDK <https://github.com/globus/globus-sdk-python>`_
 it did not include functionality for the old Nexus API.
 
 This package contains a client for talking to Nexus, based on the same core
@@ -22,7 +22,7 @@ You should therefore think of this as a third-party extension to the SDK for
 talking to Nexus.
 
 Importing and Usage
----
+-------------------
 
 Because this is not part of the SDK, you don't get at it with a simple
 ``from globus_sdk import NexusClient``.
