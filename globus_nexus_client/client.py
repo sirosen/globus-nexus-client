@@ -34,6 +34,7 @@ class NexusClient(BaseClient):
         if legacy_token:
             authorizer = LegacyGOAuthAuthorizer(legacy_token)
         BaseClient.__init__(self, "nexus", authorizer=authorizer, **kwargs)
+        self._headers['Content-Type'] = 'application/json'
 
     def get_goauth_token(self):
         """
@@ -82,12 +83,13 @@ class NexusClient(BaseClient):
         self.logger.info("NexusClient.get_group({})".format(group_id))
         return self.get('/groups/{}'.format(group_id))
 
-    def create_group(self, group_doc):
+    def create_group(self, name, description, **params):
         """
         :rtype: GlobusResponse
         """
-        self.logger.info("NexusClient.create_group({})".format(group_doc))
-        return self.post('/groups/', json_body=group_doc)
+        merge_params(params, name=name, description=description)
+        self.logger.info("NexusClient.create_group({})".format(params))
+        return self.post('/groups', json_body=params)
 
     def update_group(self, group_id, group_doc):
         """
