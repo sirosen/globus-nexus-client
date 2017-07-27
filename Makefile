@@ -25,6 +25,6 @@ build: $(VIRTUALENV)
 
 
 $(VIRTUALENV)/bin/twine: $(VIRTUALENV)
-	$(VIRTUALENV)/bin/pip install twine==1.6.5
+	$(VIRTUALENV)/bin/pip install -U twine==1.9.1
 upload: $(VIRTUALENV)/bin/twine build
 	$(VIRTUALENV)/bin/twine upload dist/*
