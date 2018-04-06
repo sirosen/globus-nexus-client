@@ -2,7 +2,7 @@ import six
 
 from globus_sdk import (
     AccessTokenAuthorizer, RefreshTokenAuthorizer, BasicAuthorizer,
-    NullAuthorizer, exc)
+    NullAuthorizer, ClientCredentialsAuthorizer, exc)
 from globus_sdk.base import BaseClient, merge_params
 
 from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
@@ -27,6 +27,7 @@ class NexusClient(BaseClient):
     """
     allowed_authorizer_types = [AccessTokenAuthorizer, RefreshTokenAuthorizer,
                                 BasicAuthorizer, NullAuthorizer,
+                                ClientCredentialsAuthorizer,
                                 LegacyGOAuthAuthorizer]
 
     def __init__(self, legacy_token=None, **kwargs):
