@@ -12,6 +12,8 @@ from globus_sdk.base import BaseClient, merge_params
 from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
 from globus_nexus_client.response import GlobusArrayResponse
 
+ACTIVE_IDENTITY_HEADER = "X-Globus-Active-Identity"
+
 
 class NexusClient(BaseClient):
     """
@@ -45,6 +47,14 @@ class NexusClient(BaseClient):
             authorizer = LegacyGOAuthAuthorizer(legacy_token)
         BaseClient.__init__(self, "nexus", authorizer=authorizer, **kwargs)
         self._headers["Content-Type"] = "application/json"
+
+    @property
+    def active_identity(self):
+        return self._headers.get(ACTIVE_IDENTITY_HEADER)
+
+    @active_identity.setter  # type: ignore
+    def set_active_identity(self, val):
+        self._headers[ACTIVE_IDENTITY_HEADER] = val
 
     def get_goauth_token(self):
         """
