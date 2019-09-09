@@ -3,28 +3,23 @@ PYTHON_VERSION ?=
 PYTHON_INTERPRETER=python$(PYTHON_VERSION)
 VIRTUALENV=.venv$(PYTHON_VERSION)
 
-.PHONY: build
+VERSION=$(shell grep '^__version__' globus_nexus_client/version.py | cut -d '"' -f2)
 
 
-
-help:
-	@echo "These are our make targets and what they do."
-	@echo "All unlisted targets are internal."
-	@echo ""
-	@echo "  upload:       [build], but also upload to pypi using twine"
+.PHONY: showvars
+showvars:
+	@echo "VERSION=$(VERSION)"
 
 
-$(VIRTUALENV): setup.py
+$(VIRTUALENV):
 	virtualenv --python $(PYTHON_INTERPRETER) $(VIRTUALENV)
 	$(VIRTUALENV)/bin/python setup.py develop
-	# explicit touch to ensure good update time relative to setup.py
-	touch $(VIRTUALENV)
-
-build: $(VIRTUALENV)
-	$(VIRTUALENV)/bin/python setup.py sdist bdist_egg
+	$(VIRTUALENV)/bin/pip install -U twine
 
 
-$(VIRTUALENV)/bin/twine: $(VIRTUALENV)
-	$(VIRTUALENV)/bin/pip install -U twine==1.9.1
-upload: $(VIRTUALENV)/bin/twine build
+.PHONY: release
+release: $(VIRTUALENV)
+	git tag -s "$(VERSION)" -m "v$(VERSION)"
+	rm -rf dist
+	$(VIRTUALENV)/bin/python setup.py sdist bdist_wheel
 	$(VIRTUALENV)/bin/twine upload dist/*
