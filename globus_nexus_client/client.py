@@ -23,13 +23,20 @@ class NexusClient(BaseClient):
 
     >>> import getpass
     >>> from globus_nexus_client import NexusClient
-    >>> nc = NexusClient()
-    >>> nc.set_token(nc.get_goauth_token('username', getpass.getpass()))
+    >>> from globus_sdk import BasicAuthorizer
+    >>> nc = NexusClient(authorizer=BasicAuthorizer("username", getpass.getpass()))
 
-    followed by whatever actions you want to perform.
-    If you want to save a token to disk, put it in ``~/.globus.cfg`` in
-    ``nexus_token`` (under the ``[general]`` heading, like ``auth_token`` and
-    ``transfer_token``).
+    followed by whatever actions you want to perform using basic auth, e.g.
+
+    >>> from globus_nexus_client import LegacyGOAuthAuthorizer
+    >>> token = nc.get_goauth_token()
+    >>> nc2 = NexusClient(authorizer=LegacyGOAuthAuthorizer(token))
+
+    Alternatively, you can use Globus Auth tokens with Nexus Client, as in
+
+    >>> from globus_nexus_client import NexusClient
+    >>> from globus_sdk import AccessTokenAuthorizer
+    >>> nc = NexusClient(authorizer=AccessTokenAuthorizer(my_access_token))
     """
 
     allowed_authorizer_types = [
