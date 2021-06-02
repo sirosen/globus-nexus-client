@@ -6,7 +6,7 @@ from globus_sdk import (
     RefreshTokenAuthorizer,
     exc,
 )
-from globus_sdk.base import BaseClient, merge_params
+from globus_sdk.base import BaseClient
 
 from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
 from globus_nexus_client.response import GlobusArrayResponse
@@ -114,7 +114,8 @@ class NexusClient(BaseClient):
         """
         :rtype: GlobusResponse
         """
-        merge_params(params, name=name, description=description)
+        params["name"] = name
+        params["description"] = description
         self.logger.debug(f"NexusClient.create_group({params})")
         return self.post("/groups", json_body=params)
 
@@ -145,12 +146,12 @@ class NexusClient(BaseClient):
         # either string "true" (lowercase) or None (remove from params)
         for_all_identities = "true" if for_all_identities else None
 
-        merge_params(
-            params,
-            for_all_identities=for_all_identities,
-            fields=fields,
-            my_roles=my_roles,
-        )
+        if for_all_identities is not None:
+            params["for_all_identities"] = for_all_identities
+        if fields is not None:
+            params["fields"] = fields
+        if my_roles is not None:
+            params["my_roles"] = my_roles
         self.logger.debug("NexusClient.list_groups({})".format(str(params)))
         return self.get("/groups", params=params, response_class=GlobusArrayResponse)
 
@@ -164,7 +165,12 @@ class NexusClient(BaseClient):
         if my_statuses and not isinstance(my_statuses, str):
             my_statuses = ",".join(my_statuses)
 
-        merge_params(params, depth=depth, my_roles=my_roles, my_statuses=my_statuses)
+        if depth is not None:
+            params["depth"] = depth
+        if my_roles is not None:
+            params["my_roles"] = my_roles
+        if my_statuses is not None:
+            params["my_statuses"] = my_statuses
         self.logger.debug(
             "NexusClient.get_group_tree({},{})".format(group_id, str(params))
         )
