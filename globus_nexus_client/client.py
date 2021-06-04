@@ -1,17 +1,32 @@
-from globus_sdk import (
-    AccessTokenAuthorizer,
-    BasicAuthorizer,
-    ClientCredentialsAuthorizer,
-    NullAuthorizer,
-    RefreshTokenAuthorizer,
-    exc,
-)
+import logging
+
+from globus_sdk import BasicAuthorizer, GlobusHTTPResponse, exc
 from globus_sdk.base import BaseClient
+from globus_sdk.transport import RequestsTransport
 
 from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
 from globus_nexus_client.response import GlobusArrayResponse
 
+log = logging.getLogger(__name__)
+
 ACTIVE_IDENTITY_HEADER = "X-Globus-Active-Identity"
+
+
+class _NexusTransport(RequestsTransport):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._active_identity = None
+
+    @property
+    def _headers(self):
+        h = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": self.user_agent,
+        }
+        if self._active_identity is not None:
+            h[ACTIVE_IDENTITY_HEADER] = self._active_identity
+        return h
 
 
 class NexusClient(BaseClient):
@@ -38,107 +53,77 @@ class NexusClient(BaseClient):
     >>> nc = NexusClient(authorizer=AccessTokenAuthorizer(my_access_token))
     """
 
-    allowed_authorizer_types = [
-        AccessTokenAuthorizer,
-        RefreshTokenAuthorizer,
-        BasicAuthorizer,
-        NullAuthorizer,
-        ClientCredentialsAuthorizer,
-        LegacyGOAuthAuthorizer,
-    ]
+    service_name = "nexus"
+    transport_class = _NexusTransport
 
     def __init__(self, legacy_token=None, **kwargs):
         authorizer = kwargs.pop("authorizer", None)
         if legacy_token:
             authorizer = LegacyGOAuthAuthorizer(legacy_token)
-        BaseClient.__init__(self, "nexus", authorizer=authorizer, **kwargs)
-        self._headers["Content-Type"] = "application/json"
+        super().__init__(authorizer=authorizer, **kwargs)
 
     @property
     def active_identity(self):
-        return self._headers.get(ACTIVE_IDENTITY_HEADER)
+        return self.transport._active_identity
 
-    @active_identity.setter  # type: ignore
-    def set_active_identity(self, val):
-        self._headers[ACTIVE_IDENTITY_HEADER] = val
+    @active_identity.setter
+    def active_identity(self, val):
+        self.transport._active_identity = val
 
-    def get_goauth_token(self):
+    def get_goauth_token(self) -> str:
         """
         Note that these tokens have a long lifetime and should be
         saved and re-used.
-
-        :rtype: string
         """
-        self.logger.debug("NexusClient.get_goauth_token() called")
+        log.debug("NexusClient.get_goauth_token() called")
         if not isinstance(self.authorizer, BasicAuthorizer):
             raise exc.GlobusError("get_goauth_token() requires basic auth")
         r = self.get("/goauth/token?grant_type=client_credentials")
         try:
             tok = r["access_token"]
-            self.logger.debug("NexusClient.get_goauth_token() success")
+            log.debug("NexusClient.get_goauth_token() success")
             return tok
         except KeyError:
-            self.logger.warn(
+            log.warn(
                 "NexusClient.get_goauth_token() failed somehow, raising an "
                 "exception now"
             )
             raise exc.GlobusAPIError(r)
 
-    def get_user(self, username):
-        """
-        :rtype: GlobusResponse
-        """
+    def get_user(self, username: str) -> GlobusHTTPResponse:
         if not isinstance(self.authorizer, LegacyGOAuthAuthorizer):
             raise exc.GlobusError(
                 "get_user() requires LegacyGOAuthAuthorizer "
                 "based authorization (a.k.a. Nexus Tokens)"
             )
-        self.logger.debug(f"NexusClient.get_user({username})")
+        log.debug(f"NexusClient.get_user({username})")
         return self.get(f"/users/{username}")
 
-    def get_user_groups_profile(self, group_id, username):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.get_user_profile({group_id}, {username})")
+    def get_user_groups_profile(self, group_id, username) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.get_user_profile({group_id}, {username})")
         return self.get(f"/groups/{group_id}/members/{username}/user")
 
-    def get_group(self, group_id):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.get_group({group_id})")
+    def get_group(self, group_id) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.get_group({group_id})")
         return self.get(f"/groups/{group_id}")
 
-    def create_group(self, name, description, **params):
-        """
-        :rtype: GlobusResponse
-        """
+    def create_group(self, name: str, description: str, **params) -> GlobusHTTPResponse:
         params["name"] = name
         params["description"] = description
-        self.logger.debug(f"NexusClient.create_group({params})")
-        return self.post("/groups", json_body=params)
+        log.debug(f"NexusClient.create_group({params})")
+        return self.post("/groups", data=params)
 
-    def update_group(self, group_id, group_doc):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.update_group({group_id})")
-        return self.put(f"/groups/{group_id}", json_body=group_doc)
+    def update_group(self, group_id, group_doc) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.update_group({group_id})")
+        return self.put(f"/groups/{group_id}", data=group_doc)
 
-    def delete_group(self, group_id):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.delete_group({group_id})")
+    def delete_group(self, group_id) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.delete_group({group_id})")
         return self.delete(f"/groups/{group_id}")
 
     def list_groups(
         self, for_all_identities=None, fields=None, my_roles=None, **params
-    ):
-        """
-        :rtype: GlobusResponse
-        """
+    ) -> GlobusHTTPResponse:
         # if not string, assume iterable
         if my_roles and not isinstance(my_roles, str):
             my_roles = ",".join(my_roles)
@@ -152,12 +137,12 @@ class NexusClient(BaseClient):
             params["fields"] = fields
         if my_roles is not None:
             params["my_roles"] = my_roles
-        self.logger.debug("NexusClient.list_groups({})".format(str(params)))
+        log.debug("NexusClient.list_groups({})".format(str(params)))
         return self.get("/groups", params=params, response_class=GlobusArrayResponse)
 
     def get_group_tree(
         self, group_id, depth=None, my_roles=None, my_statuses=None, **params
-    ):
+    ) -> GlobusHTTPResponse:
         # if not string, assume iterable
         if my_roles and not isinstance(my_roles, str):
             my_roles = ",".join(my_roles)
@@ -171,35 +156,26 @@ class NexusClient(BaseClient):
             params["my_roles"] = my_roles
         if my_statuses is not None:
             params["my_statuses"] = my_statuses
-        self.logger.debug(
-            "NexusClient.get_group_tree({},{})".format(group_id, str(params))
-        )
+        log.debug("NexusClient.get_group_tree({},{})".format(group_id, str(params)))
         return self.get(
             f"/groups/{group_id}/tree",
             params=params,
             response_class=GlobusArrayResponse,
         )
 
-    def get_group_memberships(self, group_id):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.get_group_members({group_id})")
+    def get_group_memberships(self, group_id) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.get_group_members({group_id})")
         return self.get(
             f"/groups/{group_id}/members", response_class=GlobusArrayResponse
         )
 
-    def get_group_membership(self, group_id, username):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.get_group_membership({group_id}, {username})")
+    def get_group_membership(self, group_id, username: str) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.get_group_membership({group_id}, {username})")
         return self.get(f"/groups/{group_id}/members/{username}")
 
-    def create_group_memberships(self, group_id, usernames, emails=None, **params):
-        """
-        :rtype: GlobusResponse
-        """
+    def create_group_memberships(
+        self, group_id, usernames, emails=None, **params
+    ) -> GlobusHTTPResponse:
         if isinstance(usernames, str):
             usernames = [usernames]
         if isinstance(emails, str):
@@ -208,14 +184,11 @@ class NexusClient(BaseClient):
         if emails:
             body["emails"] = list(emails)
 
-        self.logger.debug(
-            f"NexusClient.create_group_memberships({group_id}, {usernames})"
-        )
-        return self.post(f"/groups/{group_id}/members", json_body=body)
+        log.debug(f"NexusClient.create_group_memberships({group_id}, {usernames})")
+        return self.post(f"/groups/{group_id}/members", data=body)
 
-    def update_group_membership(self, group_id, username, membership_doc, **params):
-        """
-        :rtype: GlobusResponse
-        """
-        self.logger.debug(f"NexusClient.update_group_membership({membership_doc})")
-        return self.put(f"/groups/{group_id}/members/{username}", body=membership_doc)
+    def update_group_membership(
+        self, group_id, username: str, membership_doc, **params
+    ) -> GlobusHTTPResponse:
+        log.debug(f"NexusClient.update_group_membership({membership_doc})")
+        return self.put(f"/groups/{group_id}/members/{username}", data=membership_doc)

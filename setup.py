@@ -17,7 +17,7 @@ setup(
     author_email="support@globus.org",
     url="https://github.com/sirosen/globus-nexus-client",
     packages=["globus_nexus_client"],
-    install_requires=["globus-sdk>=2.0.1,<3.0.0"],
+    install_requires=["globus-sdk==3.0.0a1"],
     keywords=["globus", "groups", "nexus"],
     classifiers=[
         "Intended Audience :: Developers",
