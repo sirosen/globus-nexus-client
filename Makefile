@@ -15,7 +15,7 @@ localdev: .venv
 
 
 .PHONY: release
-release: $(VIRTUALENV)
+release: .venv
 	git tag -s "$(VERSION)" -m "v$(VERSION)"
 	rm -rf dist
 	.venv/bin/python setup.py sdist bdist_wheel
