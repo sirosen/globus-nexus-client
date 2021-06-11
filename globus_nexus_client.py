@@ -1,11 +1,9 @@
 import logging
 
-from globus_sdk import BasicAuthorizer, GlobusHTTPResponse, exc
-from globus_sdk.base import BaseClient
+from globus_sdk import GlobusHTTPResponse, exc
+from globus_sdk.authorizers import BasicAuthorizer, StaticGlobusAuthorizer
+from globus_sdk.client import BaseClient
 from globus_sdk.transport import RequestsTransport
-
-from globus_nexus_client.goauth_authorizer import LegacyGOAuthAuthorizer
-from globus_nexus_client.response import GlobusArrayResponse
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +25,21 @@ class _NexusTransport(RequestsTransport):
         if self._active_identity is not None:
             h[ACTIVE_IDENTITY_HEADER] = self._active_identity
         return h
+
+
+class NexusArrayResponse(GlobusHTTPResponse):
+    """
+    super-simple response class for data where the top-level JSON entity is an
+    Array, so __iter__ can be defined naturally on that array
+    """
+
+    def __iter__(self):
+        return iter(self.data)
+
+
+class LegacyGOAuthAuthorizer(StaticGlobusAuthorizer):
+    def __init__(self, legacy_token):
+        self.header_val = f"Globus-Goauthtoken {legacy_token}"
 
 
 class NexusClient(BaseClient):
@@ -138,7 +151,7 @@ class NexusClient(BaseClient):
         if my_roles is not None:
             params["my_roles"] = my_roles
         log.debug("NexusClient.list_groups({})".format(str(params)))
-        return GlobusArrayResponse(self.get("/groups", params=params))
+        return NexusArrayResponse(self.get("/groups", params=params))
 
     def get_group_tree(
         self, group_id, depth=None, my_roles=None, my_statuses=None, **params
@@ -157,11 +170,11 @@ class NexusClient(BaseClient):
         if my_statuses is not None:
             params["my_statuses"] = my_statuses
         log.debug("NexusClient.get_group_tree({},{})".format(group_id, str(params)))
-        return GlobusArrayResponse(self.get(f"/groups/{group_id}/tree", params=params))
+        return NexusArrayResponse(self.get(f"/groups/{group_id}/tree", params=params))
 
     def get_group_memberships(self, group_id) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.get_group_members({group_id})")
-        return GlobusArrayResponse(self.get(f"/groups/{group_id}/members"))
+        return NexusArrayResponse(self.get(f"/groups/{group_id}/members"))
 
     def get_group_membership(self, group_id, username: str) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.get_group_membership({group_id}, {username})")

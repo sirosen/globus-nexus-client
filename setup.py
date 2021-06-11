@@ -1,22 +1,14 @@
-import os.path
-from typing import Any, Dict
-
 from setuptools import setup
-
-# single source of truth for package version
-version_ns = {}  # type: Dict[str, Any]
-with open(os.path.join("globus_nexus_client", "version.py")) as f:
-    exec(f.read(), version_ns)
 
 setup(
     name="globus-nexus-client",
-    version=version_ns["__version__"],
+    version="0.4.0a1",
     description="Unofficial Globus Nexus Client (based on SDK clients)",
     long_description=open("README.rst").read(),
     author="Stephen Rosen",
     author_email="support@globus.org",
     url="https://github.com/sirosen/globus-nexus-client",
-    packages=["globus_nexus_client"],
+    py_modules=["globus_nexus_client"],
     install_requires=["globus-sdk==3.0.0a2"],
     keywords=["globus", "groups", "nexus"],
     classifiers=[
