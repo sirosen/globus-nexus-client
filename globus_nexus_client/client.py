@@ -138,7 +138,7 @@ class NexusClient(BaseClient):
         if my_roles is not None:
             params["my_roles"] = my_roles
         log.debug("NexusClient.list_groups({})".format(str(params)))
-        return self.get("/groups", params=params, response_class=GlobusArrayResponse)
+        return GlobusArrayResponse(self.get("/groups", params=params))
 
     def get_group_tree(
         self, group_id, depth=None, my_roles=None, my_statuses=None, **params
@@ -157,17 +157,11 @@ class NexusClient(BaseClient):
         if my_statuses is not None:
             params["my_statuses"] = my_statuses
         log.debug("NexusClient.get_group_tree({},{})".format(group_id, str(params)))
-        return self.get(
-            f"/groups/{group_id}/tree",
-            params=params,
-            response_class=GlobusArrayResponse,
-        )
+        return GlobusArrayResponse(self.get(f"/groups/{group_id}/tree", params=params))
 
     def get_group_memberships(self, group_id) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.get_group_members({group_id})")
-        return self.get(
-            f"/groups/{group_id}/members", response_class=GlobusArrayResponse
-        )
+        return GlobusArrayResponse(self.get(f"/groups/{group_id}/members"))
 
     def get_group_membership(self, group_id, username: str) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.get_group_membership({group_id}, {username})")
