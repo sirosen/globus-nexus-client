@@ -1,4 +1,4 @@
-VERSION=$(shell grep '^__version__' globus_nexus_client/version.py | cut -d '"' -f2)
+VERSION=$(shell grep '^version =' setup.cfg | cut -d '=' -f2 | tr -d ' ')
 
 
 .PHONY: showvars
