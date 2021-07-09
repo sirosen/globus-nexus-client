@@ -2,6 +2,8 @@
 
 == Unreleased
 
+== 0.4.0a7
+
 - Fix annotations for NexusArrayResponse methods
 
 == 0.4.0a6
