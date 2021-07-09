@@ -1,0 +1,41 @@
+= CHANGELOG
+
+== 0.4.0a2
+
+- Update to support SDK v3.0b1
+
+== 0.4.0a1
+
+- Update to support globus-sdk alpha
+
+== 0.3.0
+
+- Drop py2 support
+
+== 0.2.9
+
+- Add active_identity header support
+
+== 0.2.8
+
+- Allow use with client creds authorizer
+
+== 0.2.7
+
+- Fix for_all_identities
+
+== 0.2.6
+
+- Reduce most info logging to debug
+
+== 0.2.5
+
+- Improve create_group interface
+
+== 0.2.4
+
+- Add get_user_groups_profile
+
+== 0.2.3
+
+Changelog starts (no log prior to this version)
