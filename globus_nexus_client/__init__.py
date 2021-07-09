@@ -140,7 +140,7 @@ class NexusClient(BaseClient):
         my_roles: t.Union[None, str, t.List[str]] = None,
         my_statuses: t.Optional[str] = None,
         query_params: t.Optional[t.Dict[str, t.Any]] = None,
-    ) -> GlobusHTTPResponse:
+    ) -> NexusArrayResponse:
         query_params = query_params or {}
 
         # if not string, assume iterable
@@ -171,7 +171,7 @@ class NexusClient(BaseClient):
         my_roles: t.Union[None, str, t.List[str]] = None,
         my_statuses: t.Union[None, str, t.List[str]] = None,
         query_params: t.Optional[t.Dict[str, t.Any]] = None,
-    ) -> GlobusHTTPResponse:
+    ) -> NexusArrayResponse:
         query_params = query_params or {}
 
         # if not string, assume iterable
@@ -192,7 +192,7 @@ class NexusClient(BaseClient):
             self.get(f"/groups/{group_id}/tree", query_params=query_params)
         )
 
-    def get_group_memberships(self, group_id: str) -> GlobusHTTPResponse:
+    def get_group_memberships(self, group_id: str) -> NexusArrayResponse:
         log.debug(f"NexusClient.get_group_members({group_id})")
         return NexusArrayResponse(self.get(f"/groups/{group_id}/members"))
 
