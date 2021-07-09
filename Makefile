@@ -17,6 +17,6 @@ localdev: .venv
 .PHONY: release
 release: .venv
 	git tag -s "$(VERSION)" -m "v$(VERSION)"
-	rm -rf dist
+	rm -rf dist build
 	.venv/bin/python setup.py sdist bdist_wheel
 	.venv/bin/twine upload dist/*

@@ -1,8 +1,7 @@
 import logging
 
-from globus_sdk import GlobusHTTPResponse, exc
+from globus_sdk import BaseClient, GlobusHTTPResponse, exc
 from globus_sdk.authorizers import BasicAuthorizer, StaticGlobusAuthorizer
-from globus_sdk.client import BaseClient
 from globus_sdk.transport import RequestsTransport
 
 log = logging.getLogger(__name__)
