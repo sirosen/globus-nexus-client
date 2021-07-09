@@ -2,6 +2,8 @@
 
 == Unreleased
 
+== 0.4.0a6
+
 - Switch back to a package layout and add py.typed (publish type annotations)
 - Add type annotations
 
