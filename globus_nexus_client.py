@@ -2,28 +2,10 @@ import logging
 
 from globus_sdk import BaseClient, GlobusHTTPResponse, exc
 from globus_sdk.authorizers import BasicAuthorizer, StaticGlobusAuthorizer
-from globus_sdk.transport import RequestsTransport
 
 log = logging.getLogger(__name__)
 
 ACTIVE_IDENTITY_HEADER = "X-Globus-Active-Identity"
-
-
-class _NexusTransport(RequestsTransport):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._active_identity = None
-
-    @property
-    def _headers(self):
-        h = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": self.user_agent,
-        }
-        if self._active_identity is not None:
-            h[ACTIVE_IDENTITY_HEADER] = self._active_identity
-        return h
 
 
 class NexusArrayResponse(GlobusHTTPResponse):
@@ -66,9 +48,9 @@ class NexusClient(BaseClient):
     """
 
     service_name = "nexus"
-    transport_class = _NexusTransport
 
     def __init__(self, legacy_token=None, **kwargs):
+        self._active_identity = None
         authorizer = kwargs.pop("authorizer", None)
         if legacy_token:
             authorizer = LegacyGOAuthAuthorizer(legacy_token)
@@ -76,11 +58,18 @@ class NexusClient(BaseClient):
 
     @property
     def active_identity(self):
-        return self.transport._active_identity
+        return self._active_identity
 
     @active_identity.setter
     def active_identity(self, val):
-        self.transport._active_identity = val
+        self._active_identity = val
+
+    def request(self, *args, headers=None, **kwargs):
+        headers = headers or {}
+        if self._active_identity is not None:
+            headers[ACTIVE_IDENTITY_HEADER] = self._active_identity
+        headers["Content-Type"] = "application/json"
+        return super().request(*args, headers=headers, **kwargs)
 
     def get_goauth_token(self) -> str:
         """
@@ -119,11 +108,14 @@ class NexusClient(BaseClient):
         log.debug(f"NexusClient.get_group({group_id})")
         return self.get(f"/groups/{group_id}")
 
-    def create_group(self, name: str, description: str, **params) -> GlobusHTTPResponse:
-        params["name"] = name
-        params["description"] = description
-        log.debug(f"NexusClient.create_group({params})")
-        return self.post("/groups", data=params)
+    def create_group(
+        self, name: str, description: str, body_params=None
+    ) -> GlobusHTTPResponse:
+        body_params = body_params or {}
+        body_params["name"] = name
+        body_params["description"] = description
+        log.debug("NexusClient.create_group(%s)", body_params)
+        return self.post("/groups", data=body_params)
 
     def update_group(self, group_id, group_doc) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.update_group({group_id})")
@@ -134,8 +126,10 @@ class NexusClient(BaseClient):
         return self.delete(f"/groups/{group_id}")
 
     def list_groups(
-        self, for_all_identities=None, fields=None, my_roles=None, **params
+        self, for_all_identities=None, fields=None, my_roles=None, query_params=None
     ) -> GlobusHTTPResponse:
+        query_params = query_params or {}
+
         # if not string, assume iterable
         if my_roles and not isinstance(my_roles, str):
             my_roles = ",".join(my_roles)
@@ -144,17 +138,19 @@ class NexusClient(BaseClient):
         for_all_identities = "true" if for_all_identities else None
 
         if for_all_identities is not None:
-            params["for_all_identities"] = for_all_identities
+            query_params["for_all_identities"] = for_all_identities
         if fields is not None:
-            params["fields"] = fields
+            query_params["fields"] = fields
         if my_roles is not None:
-            params["my_roles"] = my_roles
-        log.debug("NexusClient.list_groups({})".format(str(params)))
-        return NexusArrayResponse(self.get("/groups", params=params))
+            query_params["my_roles"] = my_roles
+        log.debug("NexusClient.list_groups(%s)", query_params)
+        return NexusArrayResponse(self.get("/groups", query_params=query_params))
 
     def get_group_tree(
-        self, group_id, depth=None, my_roles=None, my_statuses=None, **params
+        self, group_id, depth=None, my_roles=None, my_statuses=None, query_params=None
     ) -> GlobusHTTPResponse:
+        query_params = query_params or {}
+
         # if not string, assume iterable
         if my_roles and not isinstance(my_roles, str):
             my_roles = ",".join(my_roles)
@@ -163,13 +159,15 @@ class NexusClient(BaseClient):
             my_statuses = ",".join(my_statuses)
 
         if depth is not None:
-            params["depth"] = depth
+            query_params["depth"] = depth
         if my_roles is not None:
-            params["my_roles"] = my_roles
+            query_params["my_roles"] = my_roles
         if my_statuses is not None:
-            params["my_statuses"] = my_statuses
-        log.debug("NexusClient.get_group_tree({},{})".format(group_id, str(params)))
-        return NexusArrayResponse(self.get(f"/groups/{group_id}/tree", params=params))
+            query_params["my_statuses"] = my_statuses
+        log.debug("NexusClient.get_group_tree(%s,%s)", group_id, query_params)
+        return NexusArrayResponse(
+            self.get(f"/groups/{group_id}/tree", query_params=query_params)
+        )
 
     def get_group_memberships(self, group_id) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.get_group_members({group_id})")
@@ -180,7 +178,7 @@ class NexusClient(BaseClient):
         return self.get(f"/groups/{group_id}/members/{username}")
 
     def create_group_memberships(
-        self, group_id, usernames, emails=None, **params
+        self, group_id, usernames, emails=None
     ) -> GlobusHTTPResponse:
         if isinstance(usernames, str):
             usernames = [usernames]
@@ -194,7 +192,7 @@ class NexusClient(BaseClient):
         return self.post(f"/groups/{group_id}/members", data=body)
 
     def update_group_membership(
-        self, group_id, username: str, membership_doc, **params
+        self, group_id, username: str, membership_doc
     ) -> GlobusHTTPResponse:
         log.debug(f"NexusClient.update_group_membership({membership_doc})")
         return self.put(f"/groups/{group_id}/members/{username}", data=membership_doc)

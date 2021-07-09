@@ -1,5 +1,10 @@
 = CHANGELOG
 
+== Unreleased
+
+- Fix query param passing to match SDK v3.0b1
+- Remove custom transport
+
 == 0.4.0a4
 
 - Fix build issue
