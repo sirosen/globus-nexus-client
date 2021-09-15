@@ -2,7 +2,11 @@ import logging
 import typing as t
 
 from globus_sdk import BaseClient, GlobusHTTPResponse, exc
-from globus_sdk.authorizers import BasicAuthorizer, StaticGlobusAuthorizer
+from globus_sdk.authorizers import (
+    BasicAuthorizer,
+    GlobusAuthorizer,
+    StaticGlobusAuthorizer,
+)
 
 log = logging.getLogger(__name__)
 
@@ -50,9 +54,14 @@ class NexusClient(BaseClient):
 
     service_name = "nexus"
 
-    def __init__(self, legacy_token: t.Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        legacy_token: t.Optional[str] = None,
+        *,
+        authorizer: t.Optional[GlobusAuthorizer] = None,
+        **kwargs,
+    ):
         self._active_identity: t.Optional[str] = None
-        authorizer = kwargs.pop("authorizer", None)
         if legacy_token:
             authorizer = LegacyGOAuthAuthorizer(legacy_token)
         super().__init__(authorizer=authorizer, **kwargs)
