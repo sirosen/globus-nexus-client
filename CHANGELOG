@@ -2,6 +2,8 @@
 
 == Unreleased
 
+- Bugfix: pass query params correctly when getting a legacy token
+
 == 0.4.0
 
 - Update to SDK >=3,<4

@@ -89,7 +89,7 @@ class NexusClient(BaseClient):
         log.debug("NexusClient.get_goauth_token() called")
         if not isinstance(self.authorizer, BasicAuthorizer):
             raise exc.GlobusError("get_goauth_token() requires basic auth")
-        r = self.get("/goauth/token?grant_type=client_credentials")
+        r = self.get("/goauth/token", query_params={"grant_type": "client_credentials"})
         try:
             tok = r["access_token"]
             log.debug("NexusClient.get_goauth_token() success")
